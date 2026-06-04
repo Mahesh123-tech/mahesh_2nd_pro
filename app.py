@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="GenZ Budget & Benchmark Tracker", layout="wide")
 
 st.title("📊 Personal Budget Analysis & Peer Benchmarking")
-st.write("Enter your profile details and monthly breakdown below to see how your spending matches up against peers.")
+st.write("Enter your profile details and monthly breakdown below to see how your spending matches up against peers and global benchmarks.")
 
 # 1. Load your baseline dataset safely
 @st.cache_data
@@ -25,6 +25,25 @@ categories = [
     'Online Shopping (USD)', 'Savings (USD)', 'Investments (USD)', 
     'Travel (USD)', 'Fitness (USD)', 'Miscellaneous (USD)'
 ]
+
+# Calculate Global Averages and Allocation Share Percentages
+global_means = df[categories].mean()
+total_global_allocation = global_means.sum()
+global_shares = (global_means / total_global_allocation) * 100
+
+# Sidebar - Global Percentages Breakdown
+st.sidebar.markdown("### 🌍 Global Dataset Benchmarks")
+st.sidebar.write("Average percentage distribution across all individuals:")
+
+sidebar_data = pd.DataFrame({
+    "Category": [cat.replace(" (USD)", "") for cat in categories],
+    "Global Share (%)": global_shares.values
+}).sort_values(by="Global Share (%)", ascending=False)
+
+# Format for display
+sidebar_data["Global Share (%)"] = sidebar_data["Global Share (%)"].map("{:.2f}%".format)
+st.sidebar.dataframe(sidebar_data, hide_index=True, use_container_width=True)
+
 
 # 2. Setup the User Input Form with a Submit Button
 with st.form("user_budget_form"):
@@ -55,6 +74,7 @@ with st.form("user_budget_form"):
     # Form Submission button
     submit_button = st.form_submit_button(label="Analyze & Calculate Percentages")
 
+
 # 3. Process data ONLY after the form is submitted
 if submit_button:
     st.markdown("---")
@@ -83,14 +103,15 @@ if submit_button:
         peer_group = df
     
     peer_averages = [round(peer_group[cat].mean(), 2) for cat in categories]
+    global_averages_list = [round(global_means[cat], 2) for cat in categories]
     user_list_values = [user_values[cat] for cat in categories]
 
-    # 5. Fixed Plotly Grouped Bar Chart Setup
+    # 5. Fixed Plotly Grouped Bar Chart Setup with Global Benchmarks
     fig_comp = go.Figure()
 
     # User allocation trace
     fig_comp.add_trace(go.Bar(
-        x=[cat.replace(" (USD)", "") for cat in categories], # Clean up label names
+        x=[cat.replace(" (USD)", "") for cat in categories],
         y=user_list_values,
         name=f"{user_name}'s Spending",
         marker_color='#1E3A8A'
@@ -104,11 +125,19 @@ if submit_button:
         marker_color='#9CA3AF'
     ))
 
-    # The layout update where 'barmode' fixes your error
+    # Global dataset baseline trace
+    fig_comp.add_trace(go.Bar(
+        x=[cat.replace(" (USD)", "") for cat in categories],
+        y=global_averages_list,
+        name="Global Average Baseline (All Ages)",
+        marker_color='#10B981'
+    ))
+
+    # Layout update
     fig_comp.update_layout(
         barmode='group',  
         title={
-            'text': f"Your Spending/Savings Breakdown vs. Peer Average Group",
+            'text': f"Your Spending/Savings Breakdown vs. Peer & Global Average Benchmarks",
             'y': 0.95,
             'x': 0.5,
             'xanchor': 'center'
@@ -131,16 +160,20 @@ if submit_button:
     for cat in categories:
         item_user_val = user_values[cat]
         item_peer_val = peer_group[cat].mean()
+        item_global_val = global_means[cat]
+        
         item_percentage = (item_user_val / user_income) * 100
+        item_global_share = global_shares[cat]
         
         breakdown_data.append({
             "Category Area": cat.replace(" (USD)", ""),
             "Your Amount ($)": f"${item_user_val:,}",
             "Share of Your Income (%)": f"{item_percentage:.1f}%",
-            "Peer Base Avg ($)": f"${round(item_peer_val, 2):,}"
+            "Peer Base Avg ($)": f"${round(item_peer_val, 2):,}",
+            "Global Base Avg ($)": f"${round(item_global_val, 2):,}",
+            "Global Avg Share (%)": f"{item_global_share:.2f}%"
         })
         
     st.table(pd.DataFrame(breakdown_data))
 else:
     st.info("💡 Fill out the form above and click **'Analyze & Calculate Percentages'** to generate your charts and tracking reports.")
-
