@@ -2,22 +2,23 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="GenZ Spend Tracker", layout="wide")
-st.title("📊 GenZ Financial Spend Analysis")
+st.set_page_config(page_title="GenZ Budget & Benchmark Tracker", layout="wide")
 
-# 1. Load your uploaded dataset
+st.title("📊 Personal Budget Analysis & Peer Benchmarking")
+st.write("Enter your profile details and monthly breakdown below to see how your spending matches up against peers.")
+
+# 1. Load your baseline dataset safely
 @st.cache_data
 def load_data():
-    # Make sure 'genz_money_spends.csv' is in the same folder as app.py
     return pd.read_csv("genz_money_spends.csv")
 
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("Could not find 'genz_money_spends.csv'. Please ensure it's in the application directory.")
+    st.error("Could not find 'genz_money_spends.csv'. Please make sure it's in the same folder as this app.")
     st.stop()
 
-# Define the spending and saving categories present in your dataset
+# Define categories present in genz_money_spends.csv
 categories = [
     'Rent (USD)', 'Groceries (USD)', 'Eating Out (USD)', 
     'Entertainment (USD)', 'Subscription Services (USD)', 'Education (USD)', 
@@ -25,71 +26,120 @@ categories = [
     'Travel (USD)', 'Fitness (USD)', 'Miscellaneous (USD)'
 ]
 
-# 2. Sidebar to select a User ID from the dataset
-st.sidebar.header("Select Profile")
-user_id = st.sidebar.selectbox("Choose User ID:", df['ID'].unique())
+# 2. Setup the User Input Form with a Submit Button
+with st.form("user_budget_form"):
+    st.subheader("📋 Step 1: Your Profile & Monthly Allocations")
+    
+    # Form layout columns
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        user_name = st.text_input("Full Name:", value="Alex")
+    with col_p2:
+        user_age = st.number_input("Age:", min_value=int(df['Age'].min()), max_value=int(df['Age'].max()), value=22)
+    with col_p3:
+        user_income = st.number_input("Monthly Salary / Income (USD):", min_value=1, value=4000)
+        
+    st.markdown("---")
+    st.markdown("##### Enter your estimated monthly allocations (in USD):")
+    
+    # Split the categories into two side-by-side columns for a clean look
+    col_c1, col_c2 = st.columns(2)
+    user_values = {}
+    
+    for i, cat in enumerate(categories):
+        # Even indexes go to column 1, odd to column 2
+        with col_c1 if i % 2 == 0 else col_c2:
+            # Default values given just as a placeholder starter
+            user_values[cat] = st.number_input(f"{cat}", min_value=0, value=250 if "Rent" in cat or "Savings" in cat or "Investment" in cat else 100)
+            
+    # Form Submission button
+    submit_button = st.form_submit_button(label="Analyze & Calculate Percentages")
 
-# Extract data for the selected user
-user_data = df[df['ID'] == user_id].iloc[0]
-user_age = int(user_data['Age'])
-user_income = user_data['Income (USD)']
-user_values = [user_data[cat] for cat in categories]
+# 3. Process data ONLY after the form is submitted
+if submit_button:
+    st.markdown("---")
+    st.subheader(f"👋 Results for {user_name} (Age {user_age})")
+    
+    # Total Allocation calculation
+    total_allocated = sum(user_values.values())
+    allocation_percentage = (total_allocated / user_income) * 100
+    
+    # Check if they went over their budget
+    if total_allocated > user_income:
+        st.warning(f"⚠️ **Note:** Your total allocations (${total_allocated:,}) exceed your monthly income (${user_income:,}) by **{allocation_percentage - 100:.1f}%**.")
+    else:
+        st.success(f"✅ **Budget Managed:** You have allocated **{allocation_percentage:.1f}%** of your total monthly income.")
 
-# 3. Calculate the Average Peer Baseline Group (Grouping by the user's age)
-peer_group = df[df['Age'] == user_age]
-peer_averages = [peer_group[cat].mean() for cat in categories]
+    # KPI Summary Cards
+    kpi1, kpi2, kpi3 = st.columns(3)
+    kpi1.metric("Total Income", f"${user_income:,}")
+    kpi2.metric("Total Allocated", f"${total_allocated:,}")
+    kpi3.metric("Total Income Allocated (%)", f"{allocation_percentage:.1f}%")
 
-# Display summary metrics
-col1, col2, col3 = st.columns(3)
-col1.metric("Selected User Age", f"{user_age} years")
-col2.metric("User Monthly Income", f"${user_income:,}")
-col3.metric("Peer Group Size (Same Age)", f"{len(peer_group)} people")
+    # 4. Filter and Calculate the Average Peer Baseline Group
+    peer_group = df[df['Age'] == user_age]
+    # Fallback if specific age data is sparse
+    if len(peer_group) < 5:
+        peer_group = df
+    
+    peer_averages = [round(peer_group[cat].mean(), 2) for cat in categories]
+    user_list_values = [user_values[cat] for cat in categories]
 
-st.markdown("---")
+    # 5. Fixed Plotly Grouped Bar Chart Setup
+    fig_comp = go.Figure()
 
-# 4. Generate the Comparison Bar Chart
-fig_comp = go.Figure()
+    # User allocation trace
+    fig_comp.add_trace(go.Bar(
+        x=[cat.replace(" (USD)", "") for cat in categories], # Clean up label names
+        y=user_list_values,
+        name=f"{user_name}'s Spending",
+        marker_color='#1E3A8A'
+    ))
 
-# Add individual user trace
-fig_comp.add_trace(go.Bar(
-    x=categories,
-    y=user_values,
-    name='Your Data',
-    marker_color='#1E3A8A'
-))
+    # Peer group baseline trace
+    fig_comp.add_trace(go.Bar(
+        x=[cat.replace(" (USD)", "") for cat in categories],
+        y=peer_averages,
+        name=f"Peer Average Baseline (Age {user_age})",
+        marker_color='#9CA3AF'
+    ))
 
-# Add baseline peer trace
-fig_comp.add_trace(go.Bar(
-    x=categories,
-    y=peer_averages,
-    name=f'Average Peer Baseline Group (Age {user_age})',
-    marker_color='#9CA3AF'
-))
+    # The layout update where 'barmode' fixes your error
+    fig_comp.update_layout(
+        barmode='group',  
+        title={
+            'text': f"Your Spending/Savings Breakdown vs. Peer Average Group",
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        xaxis_title="Financial Allocation Categories",
+        yaxis_title="Amount in USD ($)",
+        legend_title="Comparison Groups",
+        template="plotly_white",
+        height=550,
+        margin=dict(t=80, b=40)
+    )
 
-# 5. FIXED: Using 'barmode' instead of 'bmode'
-fig_comp.update_layout(
-    barmode='group',  # <--- THIS FIXES THE VALUEERROR
-    title={
-        'text': "Your Data vs. Average Peer Baseline Group",
-        'y': 0.95,
-        'x': 0.5,
-        'xanchor': 'center'
-    },
-    xaxis_title="Financial Categories",
-    yaxis_title="Amount in USD ($)",
-    legend_title="Legend",
-    template="plotly_white",
-    height=600
-)
+    # Render layout in dashboard
+    st.plotly_chart(fig_comp, use_container_width=True)
 
-# Render the chart in Streamlit
-st.plotly_chart(fig_comp, use_container_width=True)
-
-# Optional: Show numerical breakdown table
-with st.expander("Show Detailed Data Table"):
-    comparison_table = pd.DataFrame({
-        "Category": categories,
-        "Your Spend ($)": user_values,
-        "Peer Average ($)": [round(val, 2) for val in peer_averages]
-    })
-    st.dataframe(comparison_table, use_container_width=True)
+    # 6. Structured Breakdown Grid displaying percentages for each individual item
+    st.markdown("### Detailed Itemized Breakdown & Percentages")
+    
+    breakdown_data = []
+    for cat in categories:
+        item_user_val = user_values[cat]
+        item_peer_val = peer_group[cat].mean()
+        item_percentage = (item_user_val / user_income) * 100
+        
+        breakdown_data.append({
+            "Category Area": cat.replace(" (USD)", ""),
+            "Your Amount ($)": f"${item_user_val:,}",
+            "Share of Your Income (%)": f"{item_percentage:.1f}%",
+            "Peer Base Avg ($)": f"${round(item_peer_val, 2):,}"
+        })
+        
+    st.table(pd.DataFrame(breakdown_data))
+else:
+    st.info("💡 Fill out the form above and click **'Analyze & Calculate Percentages'** to generate your charts and tracking reports.")
