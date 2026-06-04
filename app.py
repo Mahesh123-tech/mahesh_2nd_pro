@@ -26,13 +26,13 @@ categories = [
     'Travel (USD)', 'Fitness (USD)', 'Miscellaneous (USD)'
 ]
 
-# Calculate Global Averages and Allocation Share Percentages
+# Calculate Global Financial Averages and Allocation Share Percentages from CSV
 global_means = df[categories].mean()
 total_global_allocation = global_means.sum()
 global_shares = (global_means / total_global_allocation) * 100
 
 # Sidebar - Global Percentages Breakdown
-st.sidebar.markdown("### 🌍 Global Dataset Benchmarks")
+st.sidebar.markdown("### 🌍 Global Dataset Budget Benchmarks")
 st.sidebar.write("Average percentage distribution across all individuals:")
 
 sidebar_data = pd.DataFrame({
@@ -43,6 +43,24 @@ sidebar_data = pd.DataFrame({
 # Format for display
 sidebar_data["Global Share (%)"] = sidebar_data["Global Share (%)"].map("{:.2f}%".format)
 st.sidebar.dataframe(sidebar_data, hide_index=True, use_container_width=True)
+
+
+# --- NEW SECTION: EDUCATION & CAREER SUCCESS OVERVIEW ---
+# Replicated directly from WhatsApp Image 2026-06-04 at 1.52.31 PM_2.jpeg
+st.markdown("---")
+st.subheader("📌 Education & Career Success Overview")
+st.caption("A high-level view of student demographics and baseline career outcomes.")
+
+ov_col1, ov_col2, ov_col3, ov_col4 = st.columns(4)
+with ov_col1:
+    st.metric(label="Total Students", value="400")
+with ov_col2:
+    st.metric(label="Avg Starting Salary", value="$87,562")
+with ov_col3:
+    st.metric(label="Avg Job Offers", value="2.7")
+with ov_col4:
+    st.metric(label="Avg Career Satisfaction", value="7.8 / 10")
+st.markdown("---")
 
 
 # 2. Setup the User Input Form with a Submit Button
