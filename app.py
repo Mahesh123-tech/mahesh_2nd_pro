@@ -103,7 +103,7 @@ with tab1:
     mean_expenses = mean_expenses.sort_values(by='Average Amount', ascending=False)
     
     with col1:
-        # Donut Chart for Expense Share (Fixed color palette to Purples_r)
+        # Donut Chart for Expense Share
         fig_donut = px.pie(
             mean_expenses, 
             values='Average Amount', 
@@ -116,7 +116,7 @@ with tab1:
         st.plotly_chart(fig_donut, use_container_width=True)
         
     with col2:
-        # Horizontal Bar Chart for Categorical Rankings (Fixed color scale to 'purples')
+        # Horizontal Bar Chart for Categorical Rankings
         fig_bar = px.bar(
             mean_expenses,
             x='Average Amount',
@@ -194,7 +194,7 @@ with tab4:
             user_income = st.number_input("Your Monthly Income (USD)", min_value=0, value=4500)
             user_savings = st.number_input("Your Monthly Savings (USD)", min_value=0, value=1200)
             user_investments = st.number_input("Your Monthly Investments (USD)", min_value=0, value=1800)
-            submitted = st.form_submit_with_button("Calculate Percentiles")
+            submitted = st.form_submit_button("Calculate Percentiles")
             
     with calc_col2:
         if submitted:
