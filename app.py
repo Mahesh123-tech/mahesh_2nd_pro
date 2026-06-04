@@ -32,7 +32,7 @@ st.markdown("""
         color: #1E293B;
     }
 </style>
-""", unsafe_html=True)
+""", unsafe_allow_html=True)  # <-- Changed to unsafe_allow_html
 
 # 2. Optimized Data Loading with Caching
 @st.cache_data
