@@ -103,20 +103,20 @@ with tab1:
     mean_expenses = mean_expenses.sort_values(by='Average Amount', ascending=False)
     
     with col1:
-        # Donut Chart for Expense Share
+        # Donut Chart for Expense Share (Fixed color palette to Purples_r)
         fig_donut = px.pie(
             mean_expenses, 
             values='Average Amount', 
             names='Expense Category', 
             hole=0.45,
-            color_discrete_sequence=px.colors.sequential.Indigo_r,
+            color_discrete_sequence=px.colors.sequential.Purples_r,
             title="Percentage Share of Core Expenses"
         )
         fig_donut.update_layout(margin=dict(t=40, b=0, l=0, r=0))
         st.plotly_chart(fig_donut, use_container_width=True)
         
     with col2:
-        # Horizontal Bar Chart for Categorical Rankings
+        # Horizontal Bar Chart for Categorical Rankings (Fixed color scale to 'purples')
         fig_bar = px.bar(
             mean_expenses,
             x='Average Amount',
@@ -124,7 +124,7 @@ with tab1:
             orientation='h',
             text_auto='.2s',
             color='Average Amount',
-            color_continuous_scale='indigo',
+            color_continuous_scale='purples',
             title="Ranked Average Categorical Outflows"
         )
         fig_bar.update_layout(yaxis={'categoryorder':'total ascending'}, margin=dict(t=40, b=0, l=0, r=0))
@@ -163,7 +163,7 @@ with tab3:
             x='Income (USD)',
             y='Investments (USD)',
             color='Age',
-            color_continuous_scale='Viridis',
+            color_continuous_scale='viridis',
             opacity=0.7,
             title="Correlation Spectrum: Income vs. Investments"
         )
@@ -175,7 +175,7 @@ with tab3:
             x='Income (USD)',
             y='Savings (USD)',
             color='Age',
-            color_continuous_scale='Plasma',
+            color_continuous_scale='plasma',
             opacity=0.7,
             title="Correlation Spectrum: Income vs. Savings"
         )
