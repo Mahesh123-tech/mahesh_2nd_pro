@@ -214,4 +214,16 @@ with tab4:
                 # Visual comparison layout
                 comparison_metrics = pd.DataFrame({
                     'Metric': ['Income', 'Savings', 'Investments'],
-                    '
+                    'Your Value': [user_income, user_savings, user_investments],
+                    'Peer Average': [peer_group['Income (USD)'].mean(), peer_group['Savings (USD)'].mean(), peer_group['Investments (USD)'].mean()]
+                })
+                
+                fig_comp = go.Figure()
+                fig_comp.add_trace(go.Bar(x=comparison_metrics['Metric'], y=comparison_metrics['Your Value'], name='You', marker_color='#6366F1'))
+                fig_comp.add_trace(go.Bar(x=comparison_metrics['Metric'], y=comparison_metrics['Peer Average'], name='Peer Avg', marker_color='#94A3B8'))
+                fig_comp.update_layout(bmode='group', title="Your Data vs. Average Peer Baseline Group")
+                st.plotly_chart(fig_comp, use_container_width=True)
+            else:
+                st.warning("Insufficient cohort metrics to establish a baseline for this specific age.")
+        else:
+            st.info("Input your financial parameters on the left pane and press submit to trigger benchmarking comparisons.")
