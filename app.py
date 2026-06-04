@@ -32,7 +32,7 @@ st.markdown("""
         color: #1E293B;
     }
 </style>
-""", unsafe_allow_html=True)  # <-- Changed to unsafe_allow_html
+""", unsafe_allow_html=True)
 
 # 2. Optimized Data Loading with Caching
 @st.cache_data
@@ -94,7 +94,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 
 # TAB 1: Spending Allocations
 with tab1:
-    st.markdown("<p class='card-title'>Where is the Money Going?</p>", unsafe_html=True)
+    st.markdown("<p class='card-title'>Where is the Money Going?</p>", unsafe_allow_html=True)
     col1, col2 = st.columns([1, 1])
     
     # Calculate Mean Distribution Breakdown
@@ -132,7 +132,7 @@ with tab1:
 
 # TAB 2: Age Cohort Analysis
 with tab2:
-    st.markdown("<p class='card-title'>Financial Progression by Age Metric</p>", unsafe_html=True)
+    st.markdown("<p class='card-title'>Financial Progression by Age Metric</p>", unsafe_allow_html=True)
     
     # Aggregate attributes by age
     age_grouped = filtered_df.groupby('Age')[['Income (USD)', 'Savings (USD)', 'Investments (USD)']].mean().reset_index()
@@ -153,7 +153,7 @@ with tab2:
 
 # TAB 3: Correlations & Cross Plots
 with tab3:
-    st.markdown("<p class='card-title'>Income Scaling vs Wealth Building Behavior</p>", unsafe_html=True)
+    st.markdown("<p class='card-title'>Income Scaling vs Wealth Building Behavior</p>", unsafe_allow_html=True)
     
     col3_1, col3_2 = st.columns(2)
     
@@ -183,7 +183,7 @@ with tab3:
 
 # TAB 4: Personal Benchmark Tool
 with tab4:
-    st.markdown("<p class='card-title'>Benchmark Your Metrics Against This Cohort</p>", unsafe_html=True)
+    st.markdown("<p class='card-title'>Benchmark Your Metrics Against This Cohort</p>", unsafe_allow_html=True)
     st.write("Enter your personal details below to see where you rank relative to the dataset peers.")
     
     calc_col1, calc_col2 = st.columns([1, 2])
@@ -214,16 +214,4 @@ with tab4:
                 # Visual comparison layout
                 comparison_metrics = pd.DataFrame({
                     'Metric': ['Income', 'Savings', 'Investments'],
-                    'Your Value': [user_income, user_savings, user_investments],
-                    'Peer Average': [peer_group['Income (USD)'].mean(), peer_group['Savings (USD)'].mean(), peer_group['Investments (USD)'].mean()]
-                })
-                
-                fig_comp = go.Figure()
-                fig_comp.add_trace(go.Bar(x=comparison_metrics['Metric'], y=comparison_metrics['Your Value'], name='You', marker_color='#6366F1'))
-                fig_comp.add_trace(go.Bar(x=comparison_metrics['Metric'], y=comparison_metrics['Peer Average'], name='Peer Avg', marker_color='#94A3B8'))
-                fig_comp.update_layout(bmode='group', title="Your Data vs. Average Peer Baseline Group")
-                st.plotly_chart(fig_comp, use_container_width=True)
-            else:
-                st.warning("Insufficient cohort metrics to establish a baseline for this specific age.")
-        else:
-            st.info("Input your financial parameters on the left pane and press submit to trigger benchmarking comparisons.")
+                    '
